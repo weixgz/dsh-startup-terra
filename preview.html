@@ -33,29 +33,30 @@
 <div id="dsh-terra-root" class="dt-root dt-boot"></div>
 
 <script>
-  window.__DSH_TERRA_VERSION__ = '1.0.0'
-
   /* 本地预览没有 Host 路由，官方徽记改用相对路径取 */
   window.__DSH_TERRA_ASSET_BASE__ = 'lib/assets/'
 
-  /* 与 lib/index.js 的 DEFAULTS 同构；mode 固定 always，方便反复刷新预览 */
+  /* SCHEMA:BEGIN 由 tools/sync-schema.mjs 从 lib/schema.js 生成，不要手改
+     （mode 覆盖为 always，方便反复刷新预览） */
+  window.__DSH_TERRA_VERSION__ = "1.1.0"
   window.__DSH_TERRA__ = {
     enabled: true,
-    mode: 'always',
-    theme: 'dark',
+    mode: "always",  /* always | session | daily */
     speed: 1,
     requireInteraction: true,
     allowSkip: true,
+    identity: "林间鹤",
+    identityId: "0001",
+    accessLevel: "8",
     sound: true,
     soundVolume: 0.7,
-    identity: '林间鹤',
-    identityId: '0001',
-    accessLevel: '8',
-    org: 'RHODES ISLAND',
-    terminal: 'TERMINAL 01',
-    footer: 'TERRA OPERATIONAL COMMAND',
-    accent: 'auto'
+    org: "RHODES ISLAND",
+    terminal: "TERMINAL 01",
+    footer: "TERRA OPERATIONAL COMMAND",
+    theme: "dark",  /* dark | light */
+    accent: "auto"  /* auto = 跟随主题；或 #rrggbb */
   }
+  /* SCHEMA:END */
 </script>
 
 <script src="lib/splash.js"></script>

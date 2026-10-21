@@ -4,9 +4,15 @@
   安装 / 卸载 dsh-startup-terra（泰拉终端启动动画）到 DSH profile。
 
 .DESCRIPTION
-  等价于手工执行：
-    dsh plugin --profile desktop add link:<本目录>
-  只是把路径斜杠与"找不到 dsh"的报错处理好。
+  做三件事：
+    1) 自检目录完整性；
+    2) 校验三处默认值副本与 lib/schema.js 一致（漂移就自动同步）；
+    3) 装 / 卸插件。
+
+  注意：这里不走 `dsh plugin --profile desktop add ...` —— dsh 的 CLI 对 profile 名
+  desktop 做了硬编码拦截（不看应用有没有运行），那条命令在任何机器上都跑不通。
+  脚本改调 tools/dsh-plugin.mjs，它直接调用 dsh 内部同一个 runPlugin()，
+  也就是 Electron 端走的那条路径。web 等其它 profile 没有被拦截，会走官方 CLI。
 
 .EXAMPLE
   .\install.ps1
@@ -33,13 +39,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$rootPosix = $root -replace '\\', '/'
 
-if (-not (Get-Command dsh -ErrorAction SilentlyContinue)) {
-  Write-Host 'x 找不到 dsh 命令。' -ForegroundColor Red
-  Write-Host '  先确认 DeepSeek Harness 已安装，并且 dsh 在 PATH 里：' -ForegroundColor DarkGray
-  Write-Host '    where dsh' -ForegroundColor DarkGray
-  Write-Host '  没有的话用应用内的终端 / 或把安装目录加进 PATH。' -ForegroundColor DarkGray
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+  Write-Host 'x 找不到 node（需要 >= 20）。' -ForegroundColor Red
+  Write-Host '  装完 node 再跑本脚本，或手工执行：' -ForegroundColor DarkGray
+  Write-Host '    node tools/dsh-plugin.mjs --profile desktop add' -ForegroundColor DarkGray
   exit 1
 }
 
@@ -48,9 +52,12 @@ $required = @(
   'package.json',
   'cordis.patch.yml',
   'lib/index.js',
+  'lib/schema.js',
   'lib/splash.js',
   'lib/splash.css',
-  'lib/client.js'
+  'lib/client.js',
+  'tools/dsh-plugin.mjs',
+  'tools/sync-schema.mjs'
 )
 $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $root $_)) })
 if ($missing.Count -gt 0) {
@@ -59,18 +66,33 @@ if ($missing.Count -gt 0) {
   exit 1
 }
 
-if ($Remove) {
-  Write-Host "→ 从 $Profile profile 卸载 dsh-startup-terra ..." -ForegroundColor Cyan
-  dsh plugin --profile $Profile remove dsh-startup-terra
-} else {
-  Write-Host "→ 安装到 $Profile profile：" -ForegroundColor Cyan
-  Write-Host "    link:$rootPosix" -ForegroundColor DarkGray
-  dsh plugin --profile $Profile add "link:$rootPosix"
+# 默认值三处副本与 lib/schema.js 是否一致
+Write-Host '→ 校验配置 schema 副本 ...' -ForegroundColor Cyan
+Push-Location $root
+node tools/sync-schema.mjs --check
+if ($LASTEXITCODE -ne 0) {
+  Write-Host '  ! 有副本漂移，自动同步一次。' -ForegroundColor Yellow
+  node tools/sync-schema.mjs
+  if ($LASTEXITCODE -ne 0) {
+    Pop-Location
+    Write-Host 'x 同步失败，先修 lib/schema.js。' -ForegroundColor Red
+    exit $LASTEXITCODE
+  }
 }
 
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "x dsh plugin 返回 $LASTEXITCODE，没成功。" -ForegroundColor Red
-  exit $LASTEXITCODE
+if ($Remove) {
+  Write-Host "→ 从 $Profile profile 卸载 dsh-startup-terra ..." -ForegroundColor Cyan
+  node tools/dsh-plugin.mjs --profile $Profile remove
+} else {
+  Write-Host "→ 安装到 $Profile profile ..." -ForegroundColor Cyan
+  node tools/dsh-plugin.mjs --profile $Profile add
+}
+$code = $LASTEXITCODE
+Pop-Location
+
+if ($code -ne 0) {
+  Write-Host "x 返回 $code，没成功。" -ForegroundColor Red
+  exit $code
 }
 
 if ($Remove) {
@@ -78,9 +100,8 @@ if ($Remove) {
   exit 0
 }
 
-Write-Host ''
-Write-Host '√ 装好了。' -ForegroundColor Green
 if (-not $NoRestartHint) {
+  Write-Host ''
   Write-Host '  下一步：完全退出 DSH 再打开（不是关窗口），' -ForegroundColor White
   Write-Host '  然后到 设置 → 泰拉启动 调身份 / 速度 / 主题。' -ForegroundColor White
   Write-Host ''

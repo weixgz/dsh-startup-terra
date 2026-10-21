@@ -29,6 +29,7 @@
 - [改东西](#改东西)
 - [和别的启动插件共存](#和别的启动插件共存)
 - [常见问题](#常见问题)
+- [更新日志](#更新日志)
 - [版权与免责声明](#版权与免责声明)
 
 ---
@@ -67,18 +68,16 @@
 **环境要求**：DSH Desktop 或 web profile（支持插件），Node ≥ 20。
 
 ```powershell
-# 方式零：脚本（Windows，会先自检目录完整性）
+# 方式零：脚本（Windows，会自检目录 + 校验配置副本 + 安装）
 .\install.ps1                 # 装到 desktop profile
+.\install.ps1 -Profile web    # 装到 web profile
 
-# 方式一：clone 后 link（推荐，改完刷新即生效）
-git clone <本仓库地址> dsh-startup-terra
-dsh plugin --profile desktop add link:C:/path/to/dsh-startup-terra
+# 方式一：命令行（跨平台，等价于上面的安装那一步）
+node tools/dsh-plugin.mjs add                      # desktop
+node tools/dsh-plugin.mjs --profile web add        # web
 
-# 方式二：把仓库目录拷到本机任意位置，同样用 link 装
-dsh plugin --profile desktop add link:D:/deepseek/dsh-startup-terra
-
-# web profile 把 --profile desktop 换成 --profile web
-dsh plugin --profile web add link:D:/deepseek/dsh-startup-terra
+# 装完看一眼装了什么
+node tools/dsh-plugin.mjs list
 ```
 
 **装完必须完全退出 DSH 再打开**（不是关窗口）。web profile 则重启 `dsh web`。
@@ -88,8 +87,16 @@ dsh plugin --profile web add link:D:/deepseek/dsh-startup-terra
 ```powershell
 .\install.ps1 -Remove
 # 或
-dsh plugin --profile desktop remove dsh-startup-terra
+node tools/dsh-plugin.mjs remove
 ```
+
+> **别用 `dsh plugin --profile desktop add ...`，那条命令跑不通。**
+> dsh 的 CLI 在 `bin.js` 里对 profile 名做了硬编码拦截（`rejectElectronProfile`）：
+> 只要叫 `desktop`（不区分大小写，也不管应用有没有在运行）就直接报错退出，
+> 开关 `manageDesktopProfile` 只在 Electron 端调用 `runCli()` 时传入，
+> 命令行和环境变量都打不开 —— 所以它在任何机器上都失败，不是你的环境问题。
+> `tools/dsh-plugin.mjs` 直接调用 dsh 内部的同一个 `runPlugin()`，也就是 Electron 端
+> 走的那条路径。`web` 等其它 profile 没有被拦截，脚本会正常走官方 CLI。
 
 > `link:` 是软链安装：之后改 `lib/splash.css` / `lib/splash.js`，**刷新页面**就能看到效果，
 > 不用重装、不用重启。改 `lib/index.js` / `lib/client.js` 才需要重启。
@@ -132,6 +139,7 @@ dsh plugin --profile desktop remove dsh-startup-terra
 ```
 dsh-startup-terra/
 ├─ lib/
+│  ├─ schema.js     ★ 配置唯一权威源：默认值 / 枚举 / 范围 / 校验
 │  ├─ index.js      Host 半侧：四条路由 + index.html 注入 + 配置读写（原子写）
 │  ├─ splash.js     启动运行时：时间线 / WebAudio 合成音效 / 交互 / 兜底
 │  ├─ splash.css    全部样式（深色 / 浅色 / 窄屏 / 减少动效）
@@ -139,6 +147,9 @@ dsh-startup-terra/
 │  └─ assets/
 │     ├─ rhodes-island-mark.svg  罗德岛徽记（第三方，非 MIT）
 │     └─ NOTICE.md               该素材的权利与使用限制
+├─ tools/
+│  ├─ sync-schema.mjs  把 schema.js 的默认值同步到三处静态副本（--check 只校验）
+│  └─ dsh-plugin.mjs   装/卸插件，绕开 CLI 对 desktop profile 的硬编码拦截
 ├─ preview.html      本地预览页（不进插件运行时）
 ├─ install.ps1       一键安装/卸载脚本（Windows）
 ├─ icon.svg          插件图标（矢量，无位图）
@@ -160,6 +171,7 @@ dsh-startup-terra/
 ## 改东西
 
 ```bash
+npm run check          # 校验三处默认值副本没漂移
 node --check lib/index.js
 node --check lib/splash.js
 node --check lib/client.js
@@ -168,8 +180,27 @@ node --check lib/client.js
 `lib/client.js` 是浏览器 bundle（用到 `Symbol.toStringTag` 与 `window`），`node --check`
 只验证语法，不会执行，所以能过。
 
+### 加 / 改一个配置项：只改 `lib/schema.js`
+
+配置项的默认值、枚举、范围、校验**只在 `lib/schema.js` 里定义一次**。加完（或改完）跑：
+
+```bash
+npm run sync
+```
+
+它会把权威值写进 `lib/splash.js`、`lib/client.js`、`preview.html` 三处标记块
+（`/* SCHEMA:BEGIN */` … `/* SCHEMA:END */`）。**那三处不要手改**，手写会被覆盖，
+而且 `npm run check` / `install.ps1` 会报错。
+
+为什么不是共享模块：`splash.js` 是浏览器 IIFE（约束是「不 require、不 import」），
+`client.js` 是手写 ModuleLoader bundle（只能 require 宿主模块），`preview.html` 跑在
+`file://` 下 —— 三者都加载不了 `schema.js`。所以走「Node 端权威 + 生成静态副本 + 脚本校验」。
+
+校验边界值也一样：`splash.js` 里不再写死 `0.35/3` 这类数字，运行时读生成的 `RULES`，
+和 Host 端的 `normalize()` 行为一致。
+
 - **改文案**：静态字在 `lib/splash.js` 的 `TEMPLATE` 里；运行期文案在 `TEMPLATE` 的
-  `data-f` 节点 + `FALLBACK`/`DEFAULTS`/`FALLBACK`（三处要保持同步）。
+  `data-f` 节点。默认文案改 `lib/schema.js` 的 `default`，然后 `npm run sync`。
 - **改配色**：`lib/splash.css` 里 `.dt-stage` 的 `--dt-*` 变量；强调色由配置写进行内样式。
 - **改字标**：`PRTS` 是排版的（`.dt-lockup-word`），不是图片也不是字体路径 ——
   改字号/字距就在这条规则里；下面那行 `SYNTHESIZE INFORMATION · ANALYSIS OS` 在 `TEMPLATE` 里。
@@ -199,6 +230,20 @@ node --check lib/client.js
 **Q：设置页没有「泰拉启动」？**
 客户端 bundle 没加载。重启 DSH，并确认 profile 的 `dsh.profile.bundles` 里有 `dsh-startup-terra`。
 
+**Q：`dsh plugin --profile desktop add ...` 报 `profile "desktop" is managed exclusively by the Electron application`？**
+这是 dsh CLI 的硬编码拦截，不是环境问题，也不是 DSH 没关掉 —— 只要 profile 名叫 `desktop`
+就直接拒绝（见[安装](#安装)）。改用：
+
+```powershell
+node tools/dsh-plugin.mjs add        # 或 .\install.ps1
+```
+
+它调用的是 dsh 内部同一个 `runPlugin()`，也就是 Electron 端走的那条路。
+
+**Q：改了默认值，设置页和播放出来的不一致？**
+跑 `npm run check`。三处副本（`splash.js` / `client.js` / `preview.html`）是从
+`lib/schema.js` 生成的，手改了就会被判漂移。执行 `npm run sync` 同步。
+
 **Q：没有声音？**
 浏览器要求先有一次用户操作才允许出声，所以音效只在点「确认登录」之后响。
 另外检查设置里的「授权音效」开关、音量、以及系统音量。
@@ -211,6 +256,26 @@ node --check lib/client.js
 
 **Q：字体不一样？**
 字体链是系统回退：没有 Bahnschrift / DIN Alternate 时退到系统无衬线，版式不变，字面略有差异。
+
+---
+
+## 更新日志
+
+### v1.1.0
+
+- **配置单一数据源**：新增 `lib/schema.js`，默认值 / 枚举 / 范围 / 校验只在这里定义一次；
+  `lib/splash.js`、`lib/client.js`、`preview.html` 的默认值块改为由 `tools/sync-schema.mjs`
+  生成（标记块 `SCHEMA:BEGIN/END`）。以前加一个配置项要改四个文件、靠注释提醒人工同步。
+- **校验边界不再散落**：`splash.js` 运行时读生成的 `RULES`，删掉了写死的 `0.35/3`、`0/1`、
+  `'dark'/'light'`，与 Host 端 `normalize()` 行为一致。
+- **修好安装链路**：新增 `tools/dsh-plugin.mjs`，绕开 dsh CLI 对 `desktop` profile 的
+  硬编码拦截（那条 `dsh plugin --profile desktop add` 在任何机器上都会失败）。
+  `install.ps1` 改为调用它，并在安装前自动校验/同步配置副本。
+- 设置页优先用接口下发的 `defaults`，进一步降低「面板显示值」与「播放实际值」漂移的可能。
+
+### v1.0.0
+
+- 首个可用版本：自检开机 → 干员档案授权 → 权限验证 → `ACCESS GRANTED` → 色散揭幕。
 
 ---
 

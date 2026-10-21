@@ -1,6 +1,6 @@
 {
   "name": "dsh-startup-terra",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "泰拉终端 · 罗德岛 HUD 风格的 DeepSeek Harness 启动动画：自检开机 → 干员档案授权 → 权限验证 → ACCESS GRANTED → 揭幕。零素材、零运行时依赖。",
   "keywords": [
     "dsh",
@@ -24,12 +24,19 @@
   },
   "files": [
     "lib",
+    "tools",
     "icon.svg",
     "cordis.patch.yml",
     "README.md",
     "DISCLAIMER.md",
     "LICENSE"
   ],
+  "scripts": {
+    "sync": "node tools/sync-schema.mjs",
+    "check": "node tools/sync-schema.mjs --check",
+    "install:desktop": "node tools/dsh-plugin.mjs add",
+    "remove:desktop": "node tools/dsh-plugin.mjs remove"
+  },
   "engines": {
     "node": ">=20"
   },
