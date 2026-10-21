@@ -1,0 +1,49 @@
+{
+  "name": "dsh-startup-terra",
+  "version": "1.0.0",
+  "description": "泰拉终端 · 罗德岛 HUD 风格的 DeepSeek Harness 启动动画：自检开机 → 干员档案授权 → 权限验证 → ACCESS GRANTED → 揭幕。零素材、零运行时依赖。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "arknights",
+    "rhodes-island",
+    "prts",
+    "terra",
+    "startup",
+    "splash"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "DISCLAIMER.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "author": "dsh-startup-terra contributors",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  }
+}

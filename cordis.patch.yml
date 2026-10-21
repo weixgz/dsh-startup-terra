@@ -1,0 +1,7 @@
+# dsh-startup-terra — bundle patch
+#
+# 只把 Host 半侧挂进 profile。Web 半侧（设置页「泰拉终端」）由 package.json 的
+# dsh.client 声明，宿主会自动组装进 client bundle，这里不用写。
+- insert:
+    - id: dsh-startup-terra
+      name: dsh-startup-terra

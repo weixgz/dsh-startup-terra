@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="dsh-startup-terra">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141617"/>
+      <stop offset="1" stop-color="#050607"/>
+    </linearGradient>
+    <!-- 黑白方案：徽记用近白到浅灰的渐变，不做任何彩色 -->
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfdfd"/>
+      <stop offset="1" stop-color="#a8b2b6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="128" height="128" rx="26" fill="url(#bg)"/>
+
+  <!-- 角落框线 -->
+  <path d="M14 34V14h20M94 14h20v20M114 94v20h-20M34 114H14V94"
+        fill="none" stroke="#f2f5f6" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- 六边形徽记 -->
+  <polygon points="64,22 100,43 100,85 64,106 28,85 28,43"
+           fill="none" stroke="url(#edge)" stroke-width="2.6"
+           stroke-linejoin="round"/>
+
+  <!-- 内三角 -->
+  <polygon points="64,44 87,82 41,82"
+           fill="none" stroke="#e6eef0" stroke-width="2"
+           stroke-linejoin="round" stroke-opacity="0.9"/>
+
+  <!-- 核心点 -->
+  <circle cx="64" cy="64" r="4.2" fill="#fbfdfd"/>
+
+  <!-- HUD 刻度 -->
+  <path d="M64 12v8M64 108v8M12 64h8M108 64h8"
+        stroke="#f2f5f6" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round"/>
+</svg>

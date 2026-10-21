@@ -1,0 +1,965 @@
+/* ============================================================================
+ * dsh-startup-terra — 启动屏样式
+ * ----------------------------------------------------------------------------
+ * 深色（默认）/ 浅色两套底板，同一份版式。两套都是黑白色阶：
+ *   深色 = 近白强调（--dt-accent #f2f5f6）+ 灰阶层次
+ *   浅色 = 近黑强调（--dt-accent #14181b）
+ * 配置里 accent 为 'auto'（默认）时不写行内变量，直接用下面按主题定义的极色；
+ * 配了自定义色号时 splash.js 才会把 --dt-accent 覆盖成那个颜色。
+ *
+ * 全部视觉由 CSS + 内联 SVG 完成：没有位图、没有音频文件、没有 web font。
+ * ========================================================================== */
+
+#dsh-terra-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+}
+
+html.dt-lock,
+html.dt-lock body {
+  overflow: hidden !important;
+}
+
+#dsh-terra-root.dt-boot {
+  background: #060809;
+}
+
+/* ── 舞台 ─────────────────────────────────────────────────────────────── */
+
+.dt-stage {
+  /* 默认是「跟随主题」的极色：深色底用近白，浅色底用近黑（见 .dt-theme-light）。
+     用户配了自定义 accent 时，splash.js 会把 --dt-accent 写进行内样式盖掉这里。 */
+  --dt-accent: #f2f5f6;
+  --dt-accent-fg: #05090b;
+  --dt-bg: #060809;
+  --dt-ink: #eef1f2;
+  --dt-dim: #8a9296;
+  --dt-line: rgba(232, 238, 240, 0.16);
+  --dt-line-strong: rgba(232, 238, 240, 0.38);
+  --dt-panel: rgba(10, 12, 13, 0.9);
+
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--dt-ink);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(90% 70% at 50% 120%, rgba(255, 255, 255, 0.04) 0%, rgba(6, 8, 10, 0) 60%),
+    var(--dt-bg);
+  font-family: "Bahnschrift", "DIN Alternate", "Rajdhani", ui-sans-serif, system-ui,
+    "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  animation: dt-fade-in 260ms ease both;
+}
+
+.dt-theme-light {
+  --dt-accent: #14181b;
+  --dt-accent-fg: #f7fafb;
+  --dt-bg: #eef1f2;
+  --dt-ink: #121516;
+  --dt-dim: #666e72;
+  --dt-line: rgba(18, 21, 22, 0.14);
+  --dt-line-strong: rgba(18, 21, 22, 0.34);
+  --dt-panel: rgba(255, 255, 255, 0.92);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(18, 21, 22, 0.06) 0%, rgba(238, 241, 242, 0) 55%),
+    var(--dt-bg);
+}
+
+/* 网格底纹 + 扫描线 + 噪点：都用渐变画，不加载图片 */
+.dt-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--dt-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--dt-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(80% 65% at 50% 42%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(80% 65% at 50% 42%, #000 25%, transparent 78%);
+  opacity: 0.5;
+}
+
+.dt-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0 1px,
+    transparent 1px 3px
+  );
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+}
+
+.dt-theme-light .dt-scan {
+  opacity: 0.14;
+}
+
+.dt-noise {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.9) 0.5px, transparent 0.6px),
+    radial-gradient(rgba(255, 255, 255, 0.6) 0.5px, transparent 0.6px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 2px 3px;
+  animation: dt-noise-drift 900ms steps(3) infinite;
+}
+
+.dt-theme-light .dt-noise {
+  opacity: 0.035;
+}
+
+/* 四角框线 */
+.dt-frame {
+  position: absolute;
+  inset: 18px;
+  pointer-events: none;
+}
+
+.dt-frame::before,
+.dt-frame::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--dt-line-strong);
+}
+
+.dt-frame::before {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.dt-frame::after {
+  right: 0;
+  bottom: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* ── 顶栏 / 底栏 ──────────────────────────────────────────────────────── */
+
+.dt-top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 26px 40px 0;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dt-top-left,
+.dt-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dt-org {
+  color: var(--dt-ink);
+  font-weight: 700;
+}
+
+.dt-slash {
+  color: var(--dt-accent);
+}
+
+.dt-tag,
+.dt-term {
+  color: var(--dt-dim);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dt-skip {
+  appearance: none;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--dt-dim);
+  background: transparent;
+  border: 1px solid var(--dt-line);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.dt-skip:hover:not(:disabled) {
+  color: var(--dt-ink);
+  border-color: var(--dt-line-strong);
+  background: color-mix(in srgb, var(--dt-accent) 10%, transparent);
+}
+
+.dt-skip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.dt-foot {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 40px 24px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dt-dim);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+/* ── 场景容器 ─────────────────────────────────────────────────────────── */
+
+.dt-main {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 40px;
+}
+
+.dt-scene {
+  display: none;
+  width: 100%;
+  max-width: 720px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dt-scene.is-active {
+  display: flex;
+  animation: dt-rise 320ms cubic-bezier(0.22, 0.9, 0.24, 1) both;
+}
+
+/* ── 徽记 ─────────────────────────────────────────────────────────────── */
+
+.dt-emblem {
+  position: relative;
+  width: 156px;
+  height: 146px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 22px;
+}
+
+.dt-emblem::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--dt-accent) 22%, transparent) 0%, transparent 68%);
+  filter: blur(6px);
+  animation: dt-breathe 3.6s ease-in-out infinite;
+}
+
+.dt-emblem-sm {
+  width: 78px;
+  height: 74px;
+  margin: 0;
+}
+
+.dt-emblem-sm::before {
+  inset: -10px;
+}
+
+/* 官方徽记（rhodes-island-mark.svg）叠在占位徽记上，加载成功才显形 */
+.dt-mark-wrap {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* 徽记落位后扫过一道高光。放在 .dt-emblem 上而不是 .dt-mark-wrap 里：
+   浅色主题那层 invert(1) 会把高光一起翻面，正好翻成看不清的浅色。 */
+.dt-emblem::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+      104deg,
+      transparent 38%,
+      color-mix(in srgb, var(--dt-accent) 62%, transparent) 50%,
+      transparent 62%
+    )
+    no-repeat;
+  background-size: 240% 100%;
+  background-position: 130% 0;
+  opacity: 0;
+}
+
+.dt-emblem.has-logo::after {
+  animation: dt-mark-sweep 980ms ease-out 260ms 1;
+}
+
+.dt-mark-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+}
+
+/* 浅色主题翻面：黑白互换就是官方的 inverse 版，不必再放一份文件 */
+.dt-theme-light .dt-mark-wrap {
+  filter: invert(1);
+}
+
+.dt-emblem.has-logo .dt-mark-img {
+  opacity: 1;
+  animation: dt-logo-in 760ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.dt-emblem.has-logo .dt-mark {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.dt-mark {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.dt-mark-hex,
+.dt-mark-tri {
+  fill: none;
+  stroke: var(--dt-accent);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-dasharray: 460;
+  stroke-dashoffset: 460;
+  animation: dt-draw 1500ms cubic-bezier(0.5, 0, 0.2, 1) 120ms forwards;
+}
+
+.dt-mark-tri {
+  stroke: var(--dt-dim);
+  stroke-width: 1.4;
+  stroke-dasharray: 240;
+  stroke-dashoffset: 240;
+  animation-duration: 1200ms;
+  animation-delay: 420ms;
+  opacity: 1;
+}
+
+.dt-mark-core {
+  fill: var(--dt-accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dt-core-in 640ms cubic-bezier(0.2, 1.4, 0.4, 1) 900ms both;
+}
+
+.dt-mark-tick {
+  stroke: var(--dt-accent);
+  stroke-width: 1.6;
+  opacity: 0.55;
+  animation: dt-fade-in 400ms ease 1100ms both;
+}
+
+/* ── PRTS 字标（排版出来，不是图片）────────────────────────────────────── */
+
+.dt-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(420px, 82%);
+  margin-bottom: 20px;
+}
+
+.dt-lockup-word {
+  font-size: clamp(34px, 6.4vw, 64px);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  line-height: 0.94;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dt-ink);
+}
+
+/* 一粗一细的双线，粗线上有一条来回扫的游标。
+   整块高度 7px 并 overflow:hidden —— 游标跑到头会被裁掉，不会飞出去。 */
+.dt-lockup-rule {
+  position: relative;
+  width: 100%;
+  height: 7px;
+  margin: 13px 0 0;
+  overflow: hidden;
+  background-image: linear-gradient(var(--dt-ink), var(--dt-ink));
+  background-size: 100% 2px;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  opacity: 0.92;
+}
+
+.dt-lockup-rule::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 100%;
+  height: 1px;
+  background: var(--dt-ink);
+  opacity: 0.32;
+}
+
+.dt-lockup-rule::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 4px;
+  background: var(--dt-accent);
+  animation: dt-sweep 2.6s cubic-bezier(0.6, 0, 0.3, 1) 400ms infinite;
+}
+
+.dt-lockup-sub {
+  margin-top: 13px;
+  max-width: 100%;
+  font-size: 9.5px;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dt-dim);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.dt-log {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  width: min(420px, 82%);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.dt-log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--dt-dim);
+  opacity: 0;
+  animation: dt-fade-in 260ms ease forwards;
+}
+
+.dt-log-line::before {
+  content: "›";
+  color: var(--dt-accent);
+  flex: 0 0 auto;
+}
+
+.dt-log-k {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.dt-log-dots {
+  flex: 0 1 auto;
+  min-width: 12px;
+  margin: 0 2px;
+  border-bottom: 1px dotted var(--dt-line-strong);
+  transform: translateY(-3px);
+}
+
+.dt-log-v {
+  flex: 0 0 auto;
+  color: var(--dt-accent);
+  letter-spacing: 0.14em;
+}
+
+/* ── 进度条 ───────────────────────────────────────────────────────────── */
+
+.dt-bar {
+  position: relative;
+  width: min(420px, 82%);
+  height: 3px;
+  background: color-mix(in srgb, var(--dt-ink) 12%, transparent);
+  overflow: hidden;
+}
+
+.dt-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0 8px,
+    var(--dt-bg) 8px 10px
+  );
+  opacity: 0.9;
+}
+
+.dt-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, color-mix(in srgb, var(--dt-accent) 55%, transparent), var(--dt-accent));
+  transition: width 220ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.dt-bar-meta {
+  width: min(420px, 82%);
+  margin-top: 9px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--dt-dim);
+  text-transform: uppercase;
+}
+
+.dt-bar-pct {
+  color: var(--dt-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 授权面板 ─────────────────────────────────────────────────────────── */
+
+.dt-panel {
+  width: min(560px, 100%);
+  border: 1px solid var(--dt-line-strong);
+  background: var(--dt-panel);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.85);
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+.dt-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 42px;
+  background: var(--dt-accent);
+}
+
+.dt-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--dt-line);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dt-dim);
+}
+
+.dt-panel-head b {
+  color: var(--dt-ink);
+  font-weight: 600;
+}
+
+.dt-panel-body {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 20px 22px;
+}
+
+.dt-dossier {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.dt-dossier-title {
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--dt-dim);
+  margin-bottom: 2px;
+}
+
+.dt-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.dt-row-k {
+  flex: 0 0 auto;
+  color: var(--dt-dim);
+  text-transform: uppercase;
+}
+
+.dt-row-dot {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted var(--dt-line-strong);
+  transform: translateY(-3px);
+}
+
+.dt-row-v {
+  flex: 0 0 auto;
+  color: var(--dt-ink);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  max-width: 60%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dt-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 20px 16px;
+  border-top: 1px solid var(--dt-line);
+  flex-wrap: wrap;
+}
+
+.dt-confirm {
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+  padding: 10px 26px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  color: var(--dt-accent-fg);
+  background: var(--dt-accent);
+  border: 0;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+}
+
+.dt-confirm:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.dt-confirm:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.dt-confirm:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dt-confirm:focus-visible {
+  outline: 2px solid var(--dt-ink);
+  outline-offset: 3px;
+}
+
+.dt-hint {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dt-dim);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+/* ── 验证态 ───────────────────────────────────────────────────────────── */
+
+.dt-verify {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dt-panel.is-verifying .dt-verify {
+  display: flex;
+}
+
+.dt-vrow {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--dt-dim);
+  opacity: 0.55;
+  transition: color 200ms ease, opacity 200ms ease;
+}
+
+.dt-vrow-k {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.dt-vrow-v {
+  flex: 0 0 auto;
+  letter-spacing: 0.14em;
+}
+
+.dt-vrow.is-ok {
+  color: var(--dt-accent);
+  opacity: 1;
+}
+
+.dt-hex {
+  margin-top: 2px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dt-dim);
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dt-panel.is-verifying .dt-confirm {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── ACCESS GRANTED ───────────────────────────────────────────────────── */
+
+.dt-grant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  animation: dt-grant-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dt-grant-word {
+  font-size: clamp(26px, 6vw, 58px);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--dt-ink);
+  text-shadow:
+    1.5px 0 0 color-mix(in srgb, var(--dt-accent) 50%, transparent),
+    -1.5px 0 0 color-mix(in srgb, var(--dt-dim) 55%, transparent);
+}
+
+.dt-grant-line {
+  width: 0;
+  height: 2px;
+  background: var(--dt-accent);
+  animation: dt-grant-line 520ms cubic-bezier(0.2, 0.9, 0.2, 1) 160ms forwards;
+}
+
+.dt-grant-sub {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--dt-dim);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+/* 揭幕：闪白 */
+.dt-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #fff;
+  opacity: 0;
+  z-index: 9;
+}
+
+.dt-flash.is-on {
+  animation: dt-flash 760ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 解析收尾：整幕色散 + 后撤 */
+.dt-stage.is-leaving {
+  animation: dt-leave 700ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── 动画 ─────────────────────────────────────────────────────────────── */
+
+@keyframes dt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dt-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dt-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes dt-core-in {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 官方徽记进场：从模糊放大里「显影」出来 */
+@keyframes dt-logo-in {
+  from { opacity: 0; transform: scale(0.93); filter: blur(7px); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes dt-mark-sweep {
+  0% { opacity: 0; background-position: 130% 0; }
+  22% { opacity: 0.6; }
+  100% { opacity: 0; background-position: -30% 0; }
+}
+
+@keyframes dt-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(0.94); }
+  50% { opacity: 0.95; transform: scale(1.04); }
+}
+
+@keyframes dt-sweep {
+  0% { transform: translateX(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  100% { transform: translateX(400px); opacity: 0; }
+}
+
+@keyframes dt-noise-drift {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-2px, 1px); }
+  66% { transform: translate(1px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes dt-grant-in {
+  from { opacity: 0; transform: scale(1.14); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes dt-grant-line {
+  from { width: 0; opacity: 0; }
+  to { width: min(420px, 70vw); opacity: 1; }
+}
+
+@keyframes dt-flash {
+  0% { opacity: 0; }
+  22% { opacity: 0.94; }
+  100% { opacity: 0; }
+}
+
+@keyframes dt-leave {
+  0% { opacity: 1; transform: scale(1); filter: blur(0); }
+  55% { opacity: 1; transform: scale(1.06); filter: blur(1px); }
+  100% { opacity: 0; transform: scale(1.14); filter: blur(10px); }
+}
+
+/* ── 窄屏 / 矮屏 ──────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .dt-top,
+  .dt-foot {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .dt-main {
+    padding: 18px 22px;
+  }
+
+  .dt-frame {
+    inset: 10px;
+  }
+
+  .dt-panel-body {
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  .dt-lockup-word {
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+}
+
+@media (max-height: 560px) {
+  .dt-emblem {
+    width: 108px;
+    height: 100px;
+    margin-bottom: 14px;
+  }
+
+  .dt-lockup {
+    margin-bottom: 14px;
+  }
+
+  .dt-lockup-word {
+    font-size: clamp(28px, 5.4vw, 44px);
+  }
+
+  .dt-lockup-sub {
+    display: none;
+  }
+
+  .dt-log {
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+}
+
+/* 尊重系统的减少动效偏好：保留版式，去掉装饰性抖动与漂移 */
+@media (prefers-reduced-motion: reduce) {
+  .dt-noise,
+  .dt-emblem::before,
+  .dt-lockup-rule::before,
+  .dt-emblem::after {
+    animation: none !important;
+  }
+
+  .dt-stage,
+  .dt-scene.is-active {
+    animation-duration: 1ms;
+  }
+}
